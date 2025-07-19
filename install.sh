@@ -1,5 +1,17 @@
 #!/bin/bash
 
+
+util_index_theme_inherits_set () {
+
+  local inherits_value="${1}"
+  local index_theme_file_path="${2}"
+
+  sed -i "s|^Inherits=.*|Inherits=${inherits_value}|g" "${index_theme_file_path}"
+
+  return 0
+}
+
+
 ROOT_UID=0
 DEST_DIR=
 
@@ -43,6 +55,9 @@ install() {
 
   local THEME_DIR=${dest}/${name}${theme}${color}
 
+  local inherits_light="Numix-Circle-Light,Numix-Light,Papirus-Light,Adwaita,hicolor"
+  local inherits_dark="Numix-Circle,Numix,Papirus-Dark,Adwaita,hicolor"
+
   [[ -d ${THEME_DIR} ]] && rm -rf ${THEME_DIR}
 
   echo "Installing '${THEME_DIR}'..."
@@ -51,12 +66,10 @@ install() {
   cp -r ${SRC_DIR}/{COPYING,AUTHORS}                                                   ${THEME_DIR}
   cp -r ${SRC_DIR}/src/index.theme                                                     ${THEME_DIR}
 
+  util_index_theme_inherits_set "${inherits_light}" "${THEME_DIR}/index.theme"
+
   if [[ $DESKTOP_SESSION == '/usr/share/xsessions/plasma' && ${color} == '' ]]; then
     sed -i "s/Adwaita/breeze/g" ${THEME_DIR}/index.theme
-  fi
-
-  if [[ $DESKTOP_SESSION == '/usr/share/xsessions/plasma' && ${color} == '-dark' ]]; then
-    sed -i "s/Adwaita/breeze-dark/g" ${THEME_DIR}/index.theme
   fi
 
   cd ${THEME_DIR}
@@ -84,6 +97,12 @@ install() {
   fi
 
   if [[ ${color} == '-dark' ]]; then
+    util_index_theme_inherits_set "${inherits_dark}" "${THEME_DIR}/index.theme"
+
+    if [[ $DESKTOP_SESSION == '/usr/share/xsessions/plasma' && ${color} == '-dark' ]]; then
+      sed -i "s/Adwaita/breeze-dark/g" ${THEME_DIR}/index.theme
+    fi
+
     mkdir -p                                                                           ${THEME_DIR}/{apps,categories,emblems,devices,mimes,places,status}
 
     cp -r ${SRC_DIR}/src/actions                                                       ${THEME_DIR}
